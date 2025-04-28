@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import Navbar from "~/components/common/Navbar.vue";
 import Footer from "~/components/common/Footer.vue";
+
+const dummyUser = null;
+const dummyLogout = () => {};
 </script>
 
 <template>
   <div
     class="min-h-screen flex flex-col bg-gradient-to-br from-leaf-lightest to-leaf-lighter"
   >
-    <Navbar />
+    <Navbar :user="dummyUser" :handleLogout="dummyLogout" />
 
     <div class="flex-1 flex justify-center items-center p-6">
       <slot />
