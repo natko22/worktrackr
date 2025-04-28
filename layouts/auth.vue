@@ -1,4 +1,3 @@
-<!-- layouts/default.vue -->
 <script setup lang="ts">
 import Navbar from "~/components/common/Navbar.vue";
 import Footer from "~/components/common/Footer.vue";
@@ -10,9 +9,9 @@ import Footer from "~/components/common/Footer.vue";
   >
     <Navbar />
 
-    <main class="flex-1">
+    <div class="flex-1 flex justify-center items-center p-6">
       <slot />
-    </main>
+    </div>
 
     <Footer />
   </div>
