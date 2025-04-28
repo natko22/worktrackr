@@ -1,7 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
-import { useRuntimeConfig } from "#app";
 
-export const supabase = createClient(
-  useRuntimeConfig().public.supabaseUrl as string,
-  useRuntimeConfig().public.supabaseKey as string
-);
+export default defineNuxtPlugin(() => {
+  const config = useRuntimeConfig();
+
+  const supabase = createClient(
+    config.public.supabaseUrl as string,
+    config.public.supabaseKey as string
+  );
+
+  return {
+    provide: {
+      supabase,
+    },
+  };
+});

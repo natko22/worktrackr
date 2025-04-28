@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Leaf } from "lucide-vue-next";
+import type { User } from "@supabase/supabase-js";
 
-// Determine if we should show auth links (login/signup)
-// This would be replaced with your actual auth logic
-const showAuthLinks = true;
+const props = defineProps<{
+  user: User | null;
+  handleLogout: () => void;
+}>();
 </script>
 
 <template>
@@ -19,8 +21,8 @@ const showAuthLinks = true;
       </NuxtLink>
 
       <div class="flex items-center gap-3">
-        <!-- Show these links only when user is not logged in -->
-        <template v-if="showAuthLinks">
+        <!-- Show these links only when user is NOT logged in -->
+        <template v-if="!user">
           <NuxtLink
             to="/login"
             class="px-4 py-2 text-primary-dark hover:text-primary font-medium transition-colors"
@@ -36,7 +38,7 @@ const showAuthLinks = true;
           </NuxtLink>
         </template>
 
-        <!-- Show these links when user is logged in (hidden by default) -->
+        <!-- Show these links when user IS logged in -->
         <template v-else>
           <NuxtLink
             to="/dashboard"
@@ -47,16 +49,8 @@ const showAuthLinks = true;
           >
             Dashboard
           </NuxtLink>
-          <NuxtLink
-            to="/applications"
-            class="px-4 py-2 text-primary-dark hover:text-primary font-medium transition-colors"
-            :class="{
-              'bg-leaf-lightest rounded-lg': $route.path === '/applications',
-            }"
-          >
-            Applications
-          </NuxtLink>
           <button
+            @click="props.handleLogout"
             class="px-4 py-2 text-primary-dark hover:text-primary font-medium transition-colors"
           >
             Logout
