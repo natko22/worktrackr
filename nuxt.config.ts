@@ -11,4 +11,11 @@ export default defineNuxtConfig({
     },
   },
   modules: ["@nuxtjs/color-mode"],
+
+  runtimeConfig: {
+    public: {
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_KEY,
+    },
+  },
 });
