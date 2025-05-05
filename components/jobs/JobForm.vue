@@ -96,27 +96,27 @@ const handleSubmit = () => {
   });
 };
 
-const resetForm = () => {
-  title.value = "";
-  company.value = "";
-  url.value = "";
-  status.value = "Applied";
-  salary_min.value = null;
-  salary_max.value = null;
-  location.value = "";
-  remote.value = false;
-  applied_date.value = new Date().toISOString().split("T")[0];
-  description.value = "";
-  notes.value = "";
-};
-
-defineExpose({ resetForm, title, company, url, status });
+defineExpose({
+  resetForm() {
+    title.value = "";
+    company.value = "";
+    url.value = "";
+    status.value = "Applied";
+    salary_min.value = null;
+    salary_max.value = null;
+    location.value = "";
+    remote.value = false;
+    applied_date.value = new Date().toISOString().split("T")[0];
+    description.value = "";
+    notes.value = "";
+  },
+});
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 w-full">
-    <div class="text-center mb-4">
-      <h2 class="text-3xl font-bold text-leaf-dark mb-1">
+  <div class="flex flex-col gap-4 w-full">
+    <div class="text-center mb-2">
+      <h2 class="text-2xl font-bold text-leaf-dark mb-1">
         {{ isEditing ? "Edit Application" : "Add New Application" }} 🌱
       </h2>
       <p class="text-sm text-primary-light">
@@ -124,58 +124,163 @@ defineExpose({ resetForm, title, company, url, status });
       </p>
     </div>
 
-    <!-- Job Title -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-semibold text-leaf-medium-dark"
-        >Job Title</label
-      >
-      <input
-        v-model="title"
-        type="text"
-        placeholder="Frontend Developer"
-        class="input"
-      />
+    <!-- Basic Job Details Section -->
+    <div class="space-y-4">
+      <!-- Job Title -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Job Title*</label
+        >
+        <input
+          v-model="title"
+          type="text"
+          placeholder="Frontend Developer"
+          class="input"
+          required
+        />
+      </div>
+
+      <!-- Company -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Company*</label
+        >
+        <input
+          v-model="company"
+          type="text"
+          placeholder="Google, Amazon, etc."
+          class="input"
+          required
+        />
+      </div>
+
+      <!-- URL -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Application Link</label
+        >
+        <input
+          v-model="url"
+          type="url"
+          placeholder="https://linkedin.com/jobs/..."
+          class="input"
+        />
+      </div>
+
+      <!-- Status -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Application Status*</label
+        >
+        <select v-model="status" class="input" required>
+          <option>Applied</option>
+          <option>Interview</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Company -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-semibold text-leaf-medium-dark">Company</label>
-      <input
-        v-model="company"
-        type="text"
-        placeholder="Google, Amazon, etc."
-        class="input"
-      />
+    <!-- Additional Details Section -->
+    <div class="pt-2 space-y-4">
+      <h3 class="text-md font-semibold text-leaf-dark">Additional Details</h3>
+
+      <!-- Salary Range -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Salary Range</label
+        >
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <input
+              v-model.number="salary_min"
+              type="number"
+              placeholder="Min"
+              class="input w-full"
+            />
+          </div>
+          <div class="flex-1">
+            <input
+              v-model.number="salary_max"
+              type="number"
+              placeholder="Max"
+              class="input w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Location & Remote -->
+      <div class="flex gap-4">
+        <div class="flex-1 flex flex-col gap-1">
+          <label class="text-sm font-semibold text-leaf-medium-dark"
+            >Location</label
+          >
+          <input
+            v-model="location"
+            type="text"
+            placeholder="City, Country"
+            class="input"
+          />
+        </div>
+        <div class="flex items-end pb-3 ml-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="remote"
+              class="form-checkbox h-5 w-5 text-primary"
+            />
+            <span class="text-sm font-semibold text-leaf-medium-dark"
+              >Remote?</span
+            >
+          </label>
+        </div>
+      </div>
+
+      <!-- Applied Date -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Applied Date</label
+        >
+        <input v-model="applied_date" type="date" class="input" />
+      </div>
     </div>
 
-    <!-- URL -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-semibold text-leaf-medium-dark"
-        >Application Link (Optional)</label
-      >
-      <input
-        v-model="url"
-        type="url"
-        placeholder="https://linkedin.com/jobs/..."
-        class="input"
-      />
+    <!-- Notes Section -->
+    <div class="pt-2 space-y-4">
+      <h3 class="text-md font-semibold text-leaf-dark">Notes & Description</h3>
+
+      <!-- Job Description -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Job Description</label
+        >
+        <textarea
+          v-model="description"
+          rows="3"
+          placeholder="Enter job details, requirements, etc."
+          class="input"
+        ></textarea>
+      </div>
+
+      <!-- Notes -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-semibold text-leaf-medium-dark"
+          >Your Notes</label
+        >
+        <textarea
+          v-model="notes"
+          rows="3"
+          placeholder="Add your personal notes, interview impressions, etc."
+          class="input"
+        ></textarea>
+      </div>
     </div>
 
-    <!-- Status -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-semibold text-leaf-medium-dark"
-        >Application Status</label
-      >
-      <select v-model="status" class="input">
-        <option>Applied</option>
-        <option>Interview</option>
-        <option>Offer</option>
-        <option>Rejected</option>
-      </select>
-    </div>
-
-    <!-- Buttons -->
-    <div class="flex justify-end gap-4 mt-6">
+    <!-- Buttons -  -->
+    <div
+      class="flex justify-end gap-4 sticky bottom-0 border-t border-gray-100 mt-6 mx-[-24px] px-6"
+    >
       <button @click="$emit('cancel')" type="button" class="btn-cancel">
         Cancel
       </button>
@@ -188,12 +293,12 @@ defineExpose({ resetForm, title, company, url, status });
 
 <style scoped>
 .input {
-  @apply border-2 border-leaf-light bg-background rounded-lg p-3 placeholder:text-leaf-medium-light/70 text-leaf-dark focus:ring-2 focus:ring-primary focus:outline-none transition;
+  @apply border-2 border-leaf-light bg-background rounded-lg p-2 placeholder:text-leaf-medium-light/70 text-leaf-dark focus:ring-2 focus:ring-primary focus:outline-none transition;
 }
 .btn-primary {
-  @apply px-6 py-3 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-primary-dark transition;
+  @apply px-5 py-2 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-primary-dark transition;
 }
 .btn-cancel {
-  @apply px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition;
+  @apply px-5 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition;
 }
 </style>

@@ -99,6 +99,11 @@ const handleDelete = async (id: string) => {
   }
 };
 
+// Close form without resetting form state
+const closeForm = () => {
+  showForm.value = false;
+};
+
 // Reset form
 const resetFormState = () => {
   showForm.value = false;
@@ -129,10 +134,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background p-8">
+  <div class="min-h-screen bg-background p-4 md:p-8">
     <!-- Welcome -->
-    <div class="text-center mt-8 mb-12">
-      <h1 class="text-4xl md:text-5xl font-bold text-leaf-dark">
+    <div class="text-center mt-4 md:mt-8 mb-8 md:mb-12">
+      <h1 class="text-3xl md:text-5xl font-bold text-leaf-dark">
         Welcome back, {{ userStore.displayName }} 🌱
       </h1>
       <p class="text-primary-light mt-2">Track and grow your career journey!</p>
@@ -142,7 +147,7 @@ onMounted(async () => {
     <div class="flex justify-end mb-6">
       <button
         @click="showForm = true"
-        class="px-6 py-3 bg-primary text-white rounded-full hover:bg-primary-dark transition shadow-md hover:shadow-lg"
+        class="px-4 md:px-6 py-2 md:py-3 bg-primary text-white rounded-full hover:bg-primary-dark transition shadow-md hover:shadow-lg"
       >
         + Add New Job
       </button>
@@ -171,17 +176,17 @@ onMounted(async () => {
     </div>
 
     <!-- Board -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
       <!-- Applied -->
-      <div>
-        <h2 class="text-2xl font-bold mb-4 text-leaf-dark">Applied 📄</h2>
+      <div class="p-4">
+        <h2 class="text-xl font-bold mb-4 text-leaf-dark">Applied 📄</h2>
         <div
           v-if="applicationsStore.applicationsByStatus('Applied').length === 0"
-          class="text-center text-gray-400"
+          class="text-center text-gray-400 p-4 bg-white rounded-lg"
         >
           No applications yet!
         </div>
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3">
           <JobCard
             v-for="job in applicationsStore.applicationsByStatus('Applied')"
             :key="job.id"
@@ -189,24 +194,28 @@ onMounted(async () => {
             :company="job.company"
             :status="job.status"
             :url="job.url"
+            :location="job.location"
+            :remote="job.remote"
+            :applied_date="job.applied_date"
             @edit="handleEdit(job)"
             @delete="handleDelete(job.id)"
+            class="bg-white"
           />
         </div>
       </div>
 
       <!-- Interview -->
-      <div>
-        <h2 class="text-2xl font-bold mb-4 text-yellow-700">Interview 🎤</h2>
+      <div class="p-4">
+        <h2 class="text-xl font-bold mb-4 text-yellow-700">Interview 🎤</h2>
         <div
           v-if="
             applicationsStore.applicationsByStatus('Interview').length === 0
           "
-          class="text-center text-gray-400"
+          class="text-center text-gray-400 p-4 bg-white rounded-lg"
         >
           No interviews yet!
         </div>
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3">
           <JobCard
             v-for="job in applicationsStore.applicationsByStatus('Interview')"
             :key="job.id"
@@ -214,22 +223,26 @@ onMounted(async () => {
             :company="job.company"
             :status="job.status"
             :url="job.url"
+            :location="job.location"
+            :remote="job.remote"
+            :applied_date="job.applied_date"
             @edit="handleEdit(job)"
             @delete="handleDelete(job.id)"
+            class="bg-white"
           />
         </div>
       </div>
 
       <!-- Offer -->
-      <div>
-        <h2 class="text-2xl font-bold mb-4 text-green-700">Offer 🎉</h2>
+      <div class="p-4">
+        <h2 class="text-xl font-bold mb-4 text-green-700">Offer 🎉</h2>
         <div
           v-if="applicationsStore.applicationsByStatus('Offer').length === 0"
-          class="text-center text-gray-400"
+          class="text-center text-gray-400 p-4 bg-white rounded-lg"
         >
           No offers yet!
         </div>
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3">
           <JobCard
             v-for="job in applicationsStore.applicationsByStatus('Offer')"
             :key="job.id"
@@ -237,6 +250,36 @@ onMounted(async () => {
             :company="job.company"
             :status="job.status"
             :url="job.url"
+            :location="job.location"
+            :remote="job.remote"
+            :applied_date="job.applied_date"
+            @edit="handleEdit(job)"
+            @delete="handleDelete(job.id)"
+            class="bg-white"
+          />
+        </div>
+      </div>
+
+      <!-- Rejected -->
+      <div class="p-4">
+        <h2 class="text-xl font-bold mb-4 text-gray-700">Rejected ❌</h2>
+        <div
+          v-if="applicationsStore.applicationsByStatus('Rejected').length === 0"
+          class="text-center text-gray-400 p-4 bg-white rounded-lg"
+        >
+          No rejections yet!
+        </div>
+        <div class="flex flex-col gap-3">
+          <JobCard
+            v-for="job in applicationsStore.applicationsByStatus('Rejected')"
+            :key="job.id"
+            :title="job.title"
+            :company="job.company"
+            :status="job.status"
+            :url="job.url"
+            :location="job.location"
+            :remote="job.remote"
+            :applied_date="job.applied_date"
             @edit="handleEdit(job)"
             @delete="handleDelete(job.id)"
           />
@@ -244,15 +287,17 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal with scrollable content -->
     <div
       v-if="showForm"
-      class="fixed inset-0 bg-black/40 flex justify-center items-center z-50"
+      class="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4 overflow-y-auto"
     >
-      <div class="bg-white rounded-xl p-8 shadow-xl w-full max-w-lg relative">
+      <div
+        class="bg-white rounded-xl p-6 shadow-xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto my-4"
+      >
         <button
           @click="resetFormState"
-          class="absolute top-3 right-3 text-gray-400 hover:text-red-400 text-xl"
+          class="absolute top-3 right-3 text-gray-400 hover:text-red-400 text-xl z-10"
         >
           &times;
         </button>
