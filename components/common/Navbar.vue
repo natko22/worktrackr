@@ -1,3 +1,4 @@
+<!-- In your Navbar.vue -->
 <script setup lang="ts">
 import { Leaf } from "lucide-vue-next";
 import type { User } from "@supabase/supabase-js";
@@ -5,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 const props = defineProps<{
   user: User | null;
   handleLogout: () => void;
+  isLoading: boolean; // Add this prop
 }>();
 </script>
 
@@ -21,8 +23,14 @@ const props = defineProps<{
       </NuxtLink>
 
       <div class="flex items-center gap-3">
-        <!-- Show these links only when user is NOT logged in -->
-        <template v-if="!user">
+        <!-- Show skeleton/loading state during auth check -->
+        <template v-if="isLoading">
+          <div class="w-16 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+        </template>
+
+        <!-- Show these links only when user is NOT logged in AND not loading -->
+        <template v-else-if="!user">
           <NuxtLink
             to="/login"
             class="px-4 py-2 text-primary-dark hover:text-primary font-medium transition-colors"

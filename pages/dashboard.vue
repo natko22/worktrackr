@@ -2,22 +2,33 @@
 import JobCard from "~/components/jobs/JobCard.vue";
 import JobForm from "~/components/jobs/JobForm.vue";
 import { ref, onMounted } from "vue";
-
-const { $supabase } = useNuxtApp();
+import { useUserStore } from "../stores/user";
+import { useApplicationsStore } from "~/stores/applications";
 
 interface Job {
   id: string;
   title: string;
   company: string;
-  url: string;
+  url?: string;
   status: string;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  location?: string;
+  remote?: boolean;
+  applied_date?: string;
+  description?: string;
+  notes?: string;
+  [key: string]: any;
 }
 
 definePageMeta({
   middleware: ["auth"],
 });
-const applications = ref<Job[]>([]);
-const username = ref("");
+
+const userStore = useUserStore();
+const applicationsStore = useApplicationsStore();
+
+// UI state
 const showForm = ref(false);
 const isEditing = ref(false);
 const editJobId = ref<string | null>(null);
@@ -26,120 +37,69 @@ const currentEditJob = ref({
   company: "",
   url: "",
   status: "Applied",
+  salary_min: null as number | null,
+  salary_max: null as number | null,
+  location: "",
+  remote: false,
+  applied_date: "",
+  description: "",
+  notes: "",
 });
 
-const formRef = ref();
-
-// FETCH applications from Supabase
-const fetchApplications = async () => {
-  const { data: userData } = await $supabase.auth.getUser();
-  if (!userData?.user) return;
-
-  const { data, error } = await $supabase
-    .from("applications")
-    .select("*")
-    .eq("user_id", userData.user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching applications:", error.message);
-    return;
-  }
-
-  applications.value = data || [];
-};
-
-// SAVE (Add New Application)
-const handleSave = async (job: any) => {
-  const { data: userData, error: userError } = await $supabase.auth.getUser();
-
-  if (userError) {
-    console.error("Error fetching user:", userError.message);
-    return;
-  }
-
-  if (!userData?.user) {
-    console.error("No user logged in");
-    return;
-  }
-
-  console.log("Saving job for user:", userData.user.id, job);
-
-  const { data, error } = await $supabase
-    .from("applications")
-    .insert([
-      {
-        user_id: userData.user.id,
-        title: job.title,
-        company: job.company,
-        url: job.url,
-        status: job.status,
-      },
-    ])
-    .select();
-
-  if (error) {
-    console.error("Error inserting into Supabase:", error.message);
-    return;
-  }
-
-  console.log("Inserted successfully:", data);
-
-  await fetchApplications();
-  resetFormState();
-};
-
-// UPDATE an application
-const handleUpdate = async (job: any) => {
-  if (!editJobId.value) return;
-
-  const { error } = await $supabase
-    .from("applications")
-    .update({
-      title: job.title,
-      company: job.company,
-      url: job.url,
-      status: job.status,
-    })
-    .eq("id", editJobId.value);
-
-  if (error) {
-    console.error("Error updating application:", error.message);
-    return;
-  }
-
-  await fetchApplications();
-  resetFormState();
-};
-
-// DELETE application
-const handleDelete = async (id: string) => {
-  const { error } = await $supabase.from("applications").delete().eq("id", id);
-
-  if (error) {
-    console.error("Error deleting application:", error.message);
-    return;
-  }
-
-  fetchApplications(); // Refresh after delete!
-};
-
-// EDIT job
-const handleEdit = (job: any) => {
+// Edit job
+const handleEdit = (job: Job) => {
   isEditing.value = true;
   editJobId.value = job.id;
   showForm.value = true;
 
   // Set the current job being edited
   currentEditJob.value = {
-    title: job.title,
-    company: job.company,
+    title: job.title || "",
+    company: job.company || "",
     url: job.url || "",
-    status: job.status,
+    status: job.status || "Applied",
+    salary_min: job.salary_min || null,
+    salary_max: job.salary_max || null,
+    location: job.location || "",
+    remote: job.remote || false,
+    applied_date: job.applied_date || new Date().toISOString().split("T")[0],
+    description: job.description || "",
+    notes: job.notes || "",
   };
 };
 
-// RESET form
+// Save new application
+const handleSave = async (job: Partial<Job>) => {
+  try {
+    await applicationsStore.addApplication(job);
+    resetFormState();
+  } catch (err) {
+    console.error("Error saving application:", err);
+  }
+};
+
+// Update application
+const handleUpdate = async (job: Partial<Job>) => {
+  if (!editJobId.value) return;
+
+  try {
+    await applicationsStore.updateApplication(editJobId.value, job);
+    resetFormState();
+  } catch (err) {
+    console.error("Error updating application:", err);
+  }
+};
+
+// Delete application
+const handleDelete = async (id: string) => {
+  try {
+    await applicationsStore.deleteApplication(id);
+  } catch (err) {
+    console.error("Error deleting application:", err);
+  }
+};
+
+// Reset form
 const resetFormState = () => {
   showForm.value = false;
   isEditing.value = false;
@@ -149,16 +109,22 @@ const resetFormState = () => {
     company: "",
     url: "",
     status: "Applied",
+    salary_min: null,
+    salary_max: null,
+    location: "",
+    remote: false,
+    applied_date: "",
+    description: "",
+    notes: "",
   };
 };
 
 onMounted(async () => {
-  const { data } = await $supabase.auth.getUser();
-  if (data?.user) {
-    username.value = data.user.user_metadata.full_name || "Friend";
-  }
-
-  fetchApplications(); // Fetch on page load
+  // Fetch user and applications data
+  await Promise.all([
+    userStore.fetchUser(),
+    applicationsStore.fetchApplications(),
+  ]);
 });
 </script>
 
@@ -167,7 +133,7 @@ onMounted(async () => {
     <!-- Welcome -->
     <div class="text-center mt-8 mb-12">
       <h1 class="text-4xl md:text-5xl font-bold text-leaf-dark">
-        Welcome back, {{ username }} 🌱
+        Welcome back, {{ userStore.displayName }} 🌱
       </h1>
       <p class="text-primary-light mt-2">Track and grow your career journey!</p>
     </div>
@@ -182,24 +148,42 @@ onMounted(async () => {
       </button>
     </div>
 
+    <!-- Loading state -->
+    <div
+      v-if="
+        applicationsStore.isLoading &&
+        applicationsStore.applications.length === 0
+      "
+      class="text-center py-8"
+    >
+      <p class="text-gray-500">Loading your applications...</p>
+    </div>
+
+    <!-- Error state -->
+    <div v-else-if="applicationsStore.error" class="text-center py-8">
+      <p class="text-red-500">{{ applicationsStore.error }}</p>
+      <button
+        @click="applicationsStore.fetchApplications()"
+        class="mt-4 px-4 py-2 bg-primary text-white rounded-lg"
+      >
+        Try Again
+      </button>
+    </div>
+
     <!-- Board -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-8">
       <!-- Applied -->
       <div>
         <h2 class="text-2xl font-bold mb-4 text-leaf-dark">Applied 📄</h2>
         <div
-          v-if="
-            applications.filter((job) => job.status === 'Applied').length === 0
-          "
+          v-if="applicationsStore.applicationsByStatus('Applied').length === 0"
           class="text-center text-gray-400"
         >
           No applications yet!
         </div>
         <div class="flex flex-col gap-4">
           <JobCard
-            v-for="job in applications.filter(
-              (job) => job.status === 'Applied'
-            )"
+            v-for="job in applicationsStore.applicationsByStatus('Applied')"
             :key="job.id"
             :title="job.title"
             :company="job.company"
@@ -216,8 +200,7 @@ onMounted(async () => {
         <h2 class="text-2xl font-bold mb-4 text-yellow-700">Interview 🎤</h2>
         <div
           v-if="
-            applications.filter((job) => job.status === 'Interview').length ===
-            0
+            applicationsStore.applicationsByStatus('Interview').length === 0
           "
           class="text-center text-gray-400"
         >
@@ -225,9 +208,7 @@ onMounted(async () => {
         </div>
         <div class="flex flex-col gap-4">
           <JobCard
-            v-for="job in applications.filter(
-              (job) => job.status === 'Interview'
-            )"
+            v-for="job in applicationsStore.applicationsByStatus('Interview')"
             :key="job.id"
             :title="job.title"
             :company="job.company"
@@ -243,16 +224,14 @@ onMounted(async () => {
       <div>
         <h2 class="text-2xl font-bold mb-4 text-green-700">Offer 🎉</h2>
         <div
-          v-if="
-            applications.filter((job) => job.status === 'Offer').length === 0
-          "
+          v-if="applicationsStore.applicationsByStatus('Offer').length === 0"
           class="text-center text-gray-400"
         >
           No offers yet!
         </div>
         <div class="flex flex-col gap-4">
           <JobCard
-            v-for="job in applications.filter((job) => job.status === 'Offer')"
+            v-for="job in applicationsStore.applicationsByStatus('Offer')"
             :key="job.id"
             :title="job.title"
             :company="job.company"
@@ -278,7 +257,6 @@ onMounted(async () => {
           &times;
         </button>
         <JobForm
-          ref="formRef"
           :is-editing="isEditing"
           :edit-job="currentEditJob"
           @save="isEditing ? handleUpdate($event) : handleSave($event)"
@@ -288,5 +266,3 @@ onMounted(async () => {
     </div>
   </div>
 </template>
-
-<style scoped></style>

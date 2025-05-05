@@ -12,7 +12,11 @@ const handleLogout = () => {};
   <div
     class="min-h-screen flex flex-col bg-gradient-to-br from-leaf-lightest to-leaf-lighter"
   >
-    <Navbar :user="auth.user.value" :handleLogout="handleLogout" />
+    <Navbar
+      :user="auth.user.value"
+      :handleLogout="handleLogout"
+      :isLoading="auth.loading.value"
+    />
 
     <div class="flex-1 flex justify-center items-center p-6">
       <slot />
