@@ -1,36 +1,29 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { Lock, Mail, Award, TrendingUp } from "lucide-vue-next";
+import { useAuth } from "~/composables/useAuth";
 
-const { $supabase } = useNuxtApp();
+const auth = useAuth();
 
 const email = ref("");
 const password = ref("");
-const loading = ref(false);
 const errorMessage = ref("");
+const loading = ref(false);
 
 definePageMeta({
   layout: "auth",
 });
-
 const handleLogin = async () => {
-  loading.value = true;
   errorMessage.value = "";
+  loading.value = true;
 
-  const { data, error } = await $supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value,
-  });
-
-  loading.value = false;
-
-  if (error) {
-    console.error("Login error:", error.message);
-    errorMessage.value = error.message;
-  } else {
-    console.log("Login success!", data);
+  const { success, error } = await auth.login(email.value, password.value);
+  if (success) {
     navigateTo("/dashboard");
+  } else {
+    errorMessage.value = error || "Login failed. Please try again.";
   }
+  loading.value = false;
 };
 </script>
 

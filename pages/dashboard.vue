@@ -13,6 +13,9 @@ interface Job {
   status: string;
 }
 
+definePageMeta({
+  middleware: ["auth"],
+});
 const applications = ref<Job[]>([]);
 const username = ref("");
 const showForm = ref(false);

@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { Lock, Mail, User, Award, TrendingUp } from "lucide-vue-next";
 import { ref } from "vue";
+import { useAuth } from "~/composables/useAuth";
 
-const { $supabase } = useNuxtApp();
+const auth = useAuth();
 
 const fullName = ref("");
 const email = ref("");
 const password = ref("");
 const loading = ref(false);
+const errorMessage = ref("");
 
 definePageMeta({
   layout: "auth",
@@ -15,26 +17,24 @@ definePageMeta({
 
 const handleSignup = async () => {
   loading.value = true;
+  errorMessage.value = "";
 
-  const { data, error } = await $supabase.auth.signUp({
-    email: email.value,
-    password: password.value,
-    options: {
-      data: {
-        full_name: fullName.value,
-      },
-    },
-  });
+  try {
+    const { success, error } = await auth.signup(
+      email.value,
+      password.value,
+      fullName.value
+    );
 
-  loading.value = false;
-
-  if (error) {
-    console.error("Signup error:", error.message);
-    alert("Signup failed: " + error.message);
-  } else {
-    console.log("Signup success!", data);
-    alert("Signup successful! Redirecting...");
-    navigateTo("/dashboard");
+    if (success) {
+      navigateTo("/dashboard");
+    } else {
+      errorMessage.value = error || "Signup failed. Please try again.";
+    }
+  } catch (err: any) {
+    errorMessage.value = err.message || "An unexpected error occurred";
+  } finally {
+    loading.value = false;
   }
 };
 </script>
@@ -126,6 +126,11 @@ const handleSignup = async () => {
         <span v-else>Create Account</span>
       </button>
     </form>
+
+    <!-- Show error message -->
+    <p v-if="errorMessage" class="text-center text-red-500 text-sm mt-2">
+      {{ errorMessage }}
+    </p>
 
     <div class="relative py-3">
       <div class="absolute inset-0 flex items-center">

@@ -1,25 +1,18 @@
 <script setup lang="ts">
 import Navbar from "~/components/common/Navbar.vue";
 import Footer from "~/components/common/Footer.vue";
-import { ref, onMounted } from "vue";
-import type { User } from "@supabase/supabase-js";
+import { onMounted } from "vue";
+import { useAuth } from "~/composables/useAuth";
 
-const { $supabase } = useNuxtApp();
-const user = ref<User | null>(null);
+const auth = useAuth();
 
 onMounted(async () => {
-  const { data } = await $supabase.auth.getUser();
-  user.value = data.user;
-
-  $supabase.auth.onAuthStateChange((_event, session) => {
-    user.value = session?.user ?? null;
-  });
+  await auth.initialize();
 });
 
 const handleLogout = async () => {
-  const { error } = await $supabase.auth.signOut();
-  if (!error) {
-    user.value = null;
+  const { success } = await auth.logout();
+  if (success) {
     navigateTo("/login");
   }
 };
@@ -29,7 +22,7 @@ const handleLogout = async () => {
   <div
     class="min-h-screen flex flex-col bg-gradient-to-br from-leaf-lightest to-leaf-lighter"
   >
-    <Navbar :user="user" :handleLogout="handleLogout" />
+    <Navbar :user="auth.user.value" :handleLogout="handleLogout" />
     <main class="flex-1">
       <slot />
     </main>
